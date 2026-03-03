@@ -84,3 +84,90 @@ def create_community(
     db.commit()
     db.refresh(new_community)
     return new_community
+
+@app.get("/communities/", response_model=list[schemas.CommunityOut])
+def read_communities(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    communities = db.query(models.Community).offset(skip).limit(limit).all()
+    return communities
+
+@app.get("/communities/{community_id}", response_model=schemas.CommunityOut)
+def read_community(community_id: int, db: Session = Depends(get_db)):
+    db_community = db.query(models.Community).filter(models.Community.id == community_id).first()
+    if db_community is None:
+        raise HTTPException(status_code=404, detail="Topluluk bulunamadı")
+    return db_community
+
+@app.post("/communities/join", response_model=schemas.MembershipOut)
+def join_community(
+    membership: schemas.MembershipCreate, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(get_current_user)
+):
+    existing = db.query(models.Membership).filter(
+        models.Membership.user_id == current_user.id,
+        models.Membership.community_id == membership.community_id
+    ).first()
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Zaten bu topluluğun üyesisiniz.")
+
+    new_member = models.Membership(
+        user_id=current_user.id,
+        community_id=membership.community_id,
+        role="member"
+    )
+    db.add(new_member)
+    db.commit()
+    db.refresh(new_member)
+    return new_member
+
+@app.get("/users/me", response_model=schemas.UserOut)
+def get_user_profile(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
+@app.post("/events/", response_model=schemas.EventOut)
+def create_event(
+    event: schemas.EventCreate, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    community = db.query(models.Community).filter(
+        models.Community.id == event.community_id,
+        models.Community.owner_id == current_user.id
+    ).first()
+
+    if not community:
+        raise HTTPException(status_code=403, detail="Bu topluluk adına etkinlik oluşturma yetkiniz yok.")
+
+    new_event = models.Event(**event.dict())
+    db.add(new_event)
+    db.commit()
+    db.refresh(new_event)
+    return new_event
+
+@app.post("/events/join", response_model=schemas.ParticipantOut)
+def join_event(
+    data: schemas.EventJoin, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    event = db.query(models.Event).filter(models.Event.id == data.event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı.")
+    
+    already_joined = db.query(models.EventParticipant).filter(
+        models.EventParticipant.user_id == current_user.id,
+        models.EventParticipant.event_id == data.event_id
+    ).first()
+    
+    if already_joined:
+        raise HTTPException(status_code=400, detail="Bu etkinliğe zaten kayıtlısınız.")
+
+    new_participant = models.EventParticipant(
+        user_id=current_user.id,
+        event_id=data.event_id
+    )
+    db.add(new_participant)
+    db.commit()
+    db.refresh(new_participant)
+    return new_participant
