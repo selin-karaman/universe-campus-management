@@ -25,6 +25,7 @@ class Community(Base):
     owner = relationship("User", back_populates="communities")
     events = relationship("Event", back_populates="community")
     members = relationship("Membership", back_populates="community")
+    announcements = relationship("Announcement", back_populates="community")
 
 class Event(Base):
     __tablename__ = "events"
@@ -53,6 +54,10 @@ class Membership(Base):
     def community_name(self):
         return self.community.name if self.community else None
     
+    @property
+    def user_name(self):
+        return self.user.name if self.user else "Bilinmeyen Kullanıcı"
+    
 class EventParticipant(Base):
     __tablename__ = "event_participants"
 
@@ -63,3 +68,14 @@ class EventParticipant(Base):
 
     user = relationship("User", back_populates="event_participations")
     event = relationship("Event", back_populates="participants")
+
+class Announcement(Base):
+    __tablename__ = "announcements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    content = Column(String)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    community_id = Column(Integer, ForeignKey("communities.id"))
+    community = relationship("Community", back_populates="announcements")

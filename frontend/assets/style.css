@@ -1,0 +1,79 @@
+:root {
+    --primary: #6c5ce7;
+    --bg: #0f0c29;
+    --card-bg: #1e1b4b;
+    --text: #ffffff;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 10%;
+    background: rgba(0,0,0,0.2);
+}
+
+.logo { font-size: 24px; font-weight: bold; color: var(--primary); }
+
+.hero { text-align: center; padding: 60px 20px; }
+
+.community-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    padding: 0 10%;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.3s;
+}
+
+.card:hover { transform: translateY(-10px); border-color: var(--primary); }
+
+.card h3 { margin-top: 0; color: var(--primary); }
+
+.btn-login {
+    background: var(--primary);
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 8px;
+}
+
+.btn-join {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.btn-join:hover {
+    background: #2ecc71;
+}
+
+.btn-joined {
+    background: #555; 
+    color: #aaa;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    width: 100%;
+    margin-top: 10px;
+    font-weight: bold;
+    cursor: not-allowed; 
+}

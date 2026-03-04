@@ -9,11 +9,12 @@ class MembershipBase(BaseModel):
 class MembershipCreate(MembershipBase):
     pass
 
-class MembershipOut(MembershipBase):
+class MembershipOut(BaseModel):
     id: int
     user_id: int
+    community_id: int
     role: str
-    community_name: str | None = None
+    user_name: str | None = None 
 
     class Config:
         from_attributes = True
@@ -81,3 +82,18 @@ class EventOut(EventBase):
 class EventJoin(BaseModel):
     event_id: int
 
+
+class AnnouncementBase(BaseModel):
+    title: str
+    content: str
+    community_id: int
+
+class AnnouncementCreate(AnnouncementBase):
+    pass
+
+class AnnouncementOut(AnnouncementBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

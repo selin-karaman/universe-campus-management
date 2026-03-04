@@ -5,10 +5,27 @@ from database import engine, get_db
 import models, schemas, database, utils
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.middleware.cors import CORSMiddleware
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Universe Campus Management API")
+
+app = FastAPI(title="Universe API")
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080", 
+    "http://127.0.0.1:5500",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"], 
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -33,7 +50,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     
     db.add(new_user)
     db.commit()
-    db.refresh(new_user) # ID gibi otomatik oluşan alanları geri al
+    db.refresh(new_user) 
     return new_user
 
 @app.post("/login", response_model=schemas.Token)
@@ -48,7 +65,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 
 
-from jose import JWTError, jwt # Importları unutmayalım
+from jose import JWTError, jwt 
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     credentials_exception = HTTPException(
@@ -171,3 +188,35 @@ def join_event(
     db.commit()
     db.refresh(new_participant)
     return new_participant
+
+@app.get("/communities/{community_id}/members", response_model=list[schemas.MembershipOut])
+def get_community_members(community_id: int, db: Session = Depends(get_db)):
+    members = db.query(models.Membership).filter(models.Membership.community_id == community_id).all()
+    
+    if not members:
+        return []
+        
+    return members
+
+@app.post("/announcements/", response_model=schemas.AnnouncementOut)
+def create_announcement(
+    announcement: schemas.AnnouncementCreate, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    community = db.query(models.Community).filter(
+        models.Community.id == announcement.community_id,
+        models.Community.owner_id == current_user.id
+    ).first()
+
+    if not community:
+        raise HTTPException(
+            status_code=403, 
+            detail="Sadece topluluk liderleri duyuru paylaşabilir."
+        )
+
+    new_announcement = models.Announcement(**announcement.dict())
+    db.add(new_announcement)
+    db.commit()
+    db.refresh(new_announcement)
+    return new_announcement
