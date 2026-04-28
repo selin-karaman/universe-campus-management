@@ -23,6 +23,34 @@ async function loadCommunityDetails() {
          
             fetchAnnouncements();
             loadMembers(); 
+
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const userRes = await fetch(`${API_URL}/users/me`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        
+                        const isMember = userData.memberships.some(m => m.community_id == communityId);
+                        
+                        if (isMember) {
+                            const header = document.getElementById('community-header');
+                            
+                            header.innerHTML += `
+                                <div id="membership-badge" style="margin-top:10px;">
+                                    <span style="background: #2ecc71; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; display: inline-block;">
+                                        ✓ Bu topluluğun üyesisiniz
+                                    </span>
+                                </div>`;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Üyelik durumu kontrol edilirken hata:", e);
+                }
+            }
+
         } else {
             console.error("Topluluk verisi alınamadı");
         }
@@ -62,10 +90,21 @@ async function loadMembers() {
         const res = await fetch(`${API_URL}/communities/${communityId}/members`);
         const members = await res.json();
         
-        console.log("Bu topluluğun üyeleri:", members);
-        
+        const membersDiv = document.getElementById('members-list');
+        if (!membersDiv) return;
+
+        if (members.length > 0) {
+            membersDiv.innerHTML = members.map(m => `
+                <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center;">
+                    <span style="margin-right: 8px;">👤</span>
+                    <span style="font-size: 0.9em;">${m.name}</span>
+                </div>
+            `).join('');
+        } else {
+            membersDiv.innerHTML = "<p style='font-size: 0.8em; opacity: 0.7;'>Henüz üye yok.</p>";
+        }
     } catch (e) {
-        console.error("Üyeler yüklenemedi", e);
+        console.error("Üyeler yüklenemedi:", e);
     }
 }
 

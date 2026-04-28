@@ -14,20 +14,29 @@
     </header>
 
     <main class="detail-container">
+        <div style="margin-bottom: 20px;">
+           <a href="../index.html" style="text-decoration: none; color: #a29bfe; font-weight: bold;">← Ana Sayfaya Dön</a>
+        </div>
+
         <section id="community-header">
             <h1 id="comm-name">Yükleniyor...</h1>
             <p id="comm-desc"></p>
         </section>
 
-        <div class="content-grid">
-            <section class="announcements-section">
+        <div class="content-grid" style="display: flex; gap: 30px; margin-top: 30px;">
+            <section class="announcements-section" style="flex: 2;">
                 <h2>📢 Duyurular</h2>
                 <div id="announcements-list">Henüz duyuru yok.</div>
+                
+                <section class="events-section" style="margin-top: 20px;">
+                    <h2>📅 Etkinlikler</h2>
+                    <div id="events-list">Henüz etkinlik yok.</div>
+                </section>
             </section>
 
-            <section class="events-section">
-                <h2>📅 Etkinlikler</h2>
-                <div id="events-list">Henüz etkinlik yok.</div>
+            <section class="members-section" style="flex: 1; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
+                <h2>👥 Üyeler</h2>
+                <div id="members-list">Üyeler yükleniyor...</div>
             </section>
         </div>
     </main>
