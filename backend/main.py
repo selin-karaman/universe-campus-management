@@ -11,17 +11,16 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Universe Campus Management API")
 
-app = FastAPI(title="Universe API")
 
 origins = [
     "http://localhost",
     "http://localhost:8080", 
-    "http://127.0.0.1:5500",
+    "http://127.0.0.1:5500", 
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"], 
@@ -189,14 +188,22 @@ def join_event(
     db.refresh(new_participant)
     return new_participant
 
-@app.get("/communities/{community_id}/members", response_model=list[schemas.MembershipOut])
+@app.get("/communities/{community_id}/members")
 def get_community_members(community_id: int, db: Session = Depends(get_db)):
-    members = db.query(models.Membership).filter(models.Membership.community_id == community_id).all()
+ 
+    memberships = db.query(models.Membership).filter(models.Membership.community_id == community_id).all()
     
-    if not members:
-        return []
-        
-    return members
+    results = []
+    for m in memberships:
+        user = db.query(models.User).filter(models.User.id == m.user_id).first()
+        if user:
+            results.append({
+                "id": m.id,
+                "user_id": m.user_id,
+                "community_id": m.community_id,
+                "username": user.name 
+            })
+    return results
 
 @app.post("/announcements/", response_model=schemas.AnnouncementOut)
 def create_announcement(
@@ -220,3 +227,12 @@ def create_announcement(
     db.commit()
     db.refresh(new_announcement)
     return new_announcement
+
+@app.get("/communities/{community_id}/announcements", response_model=list[schemas.AnnouncementOut])
+async def get_announcements(community_id: int, db: Session = Depends(get_db)):
+    db_community = db.query(models.Community).filter(models.Community.id == community_id).first()
+    if not db_community:
+        raise HTTPException(status_code=404, detail="Topluluk bulunamadı")
+
+    announcements = db.query(models.Announcement).filter(models.Announcement.community_id == community_id).all()
+    return announcements
