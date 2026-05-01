@@ -19,6 +19,7 @@ async function loadCommunityDetails() {
          
             fetchAnnouncements();
             loadMembers(); 
+            fetchEvents();
 
             const token = localStorage.getItem('token');
             if (token) {
@@ -51,9 +52,21 @@ async function loadCommunityDetails() {
                                     <button onclick="toggleAnnouncementForm()" style="padding: 8px 15px; background: #6c5ce7; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
                                         + Yeni Duyuru Paylaş
                                     </button>
+                                     <button onclick="toggleEventForm()" style="padding: 8px 15px; background: #a29bfe; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; margin-left: 10px;">
+                                        + Yeni Etkinlik Oluştur
+                                    </button>
                                     <div id="announcement-form" style="display:none; margin-top:15px;">
                                         <textarea id="ann-content" placeholder="Duyuru içeriğini buraya yazın..." style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd; background:#2d3436; color:white;"></textarea>
                                         <button onclick="postAnnouncement()" style="margin-top:10px; padding:8px 15px; background: #00b894; color:white; border:none; border-radius:5px; cursor:pointer;">Yayınla</button>
+                                    </div>
+                                    <div id="event-form" style="display:none; margin-top:15px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                                        <input type="text" id="event-title" placeholder="Etkinlik Başlığı" style="width:100%; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #444; background:#2d3436; color:white;">
+                                        <textarea id="event-desc" placeholder="Etkinlik Açıklaması" style="width:100%; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #444; background:#2d3436; color:white;"></textarea>
+                                        <div style="display: flex; gap: 10px;">
+                                            <input type="date" id="event-date" style="flex: 1; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #444; background:#2d3436; color:white;">
+                                            <input type="text" id="event-location" placeholder="Konum (örn: Teknopark)" style="flex: 1; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #444; background:#2d3436; color:white;">
+                                        </div>
+                                        <button onclick="postEvent()" style="width:100%; padding:10px; background: #00b894; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Etkinliği Oluştur</button>
                                     </div>
                                 </div>`;
                         }
@@ -201,6 +214,103 @@ async function deleteAnnouncement(annId) {
             fetchAnnouncements(); 
         } else {
             alert("Bu duyuruyu silme yetkiniz yok.");
+        }
+    } catch (error) {
+        console.error("Silme hatası:", error);
+    }
+}
+
+async function fetchEvents() {
+    const eventList = document.getElementById('events-list'); 
+    if (!eventList) return;
+
+    try {
+        const response = await fetch(`${API_URL}/communities/${communityId}/events`);
+        
+        if (response.ok) {
+            const events = await response.json();
+            
+            if (events.length > 0) {
+                eventList.innerHTML = events.map(e => `
+                    <div class="event-item" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed rgba(255,255,255,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <h5 style="margin: 0; color: #a29bfe; font-size: 1em;">${e.title}</h5>
+                            <span style="font-size: 0.75em; color: #636e72;">📍 ${e.location || 'Kampüs'}</span>
+                            <button onclick="deleteEvent(${e.id})" style="background:none; border:none; color:#ff7675; cursor:pointer; font-size: 1em;">🗑️</button>
+                        </div>
+                        <p style="font-size: 0.85em; margin: 8px 0; color: #dfe6e9;">${e.description}</p>
+                        <div style="font-size: 0.8em; color: #fdcb6e; font-weight: bold;">
+                            📅 ${new Date(e.date).toLocaleDateString('tr-TR')}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                eventList.innerHTML = "<p style='color: #636e72; font-size: 0.85em; padding: 10px;'>Henüz planlanmış bir etkinlik yok.</p>";
+            }
+        }
+    } catch (e) {
+        console.error("Etkinlikler yüklenirken hata:", e);
+    }
+}
+
+function toggleEventForm() {
+    const form = document.getElementById('event-form');
+    if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+async function postEvent() {
+    const title = document.getElementById('event-title').value;
+    const description = document.getElementById('event-desc').value;
+    const date = document.getElementById('event-date').value;
+    const location = document.getElementById('event-location').value;
+    const token = localStorage.getItem('token');
+
+    if (!title || !date) return alert("Lütfen başlık ve tarih alanlarını doldurun.");
+
+    try {
+        const response = await fetch(`${API_URL}/events/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: title,
+                description: description,
+                date: date,
+                location: location,
+                community_id: communityId 
+            })
+        });
+
+        if (response.ok) {
+            alert("Etkinlik başarıyla oluşturuldu!");
+            location.reload(); 
+        } else {
+            const err = await response.json();
+            alert("Hata: " + err.detail);
+        }
+    } catch (error) {
+        console.error("Etkinlik oluşturma hatası:", error);
+    }
+}
+
+async function deleteEvent(eventId) {
+    if (!confirm("Bu etkinliği silmek istediğinize emin misiniz?")) return;
+
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`${API_URL}/events/${eventId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            fetchEvents(); 
+        } else {
+            alert("Silme yetkiniz yok veya bir hata oluştu.");
         }
     } catch (error) {
         console.error("Silme hatası:", error);

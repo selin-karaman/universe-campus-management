@@ -161,6 +161,15 @@ def create_event(
     db.refresh(new_event)
     return new_event
 
+@app.get("/communities/{community_id}/events", response_model=list[schemas.EventOut])
+async def get_community_events(community_id: int, db: Session = Depends(get_db)):
+    db_community = db.query(models.Community).filter(models.Community.id == community_id).first()
+    if not db_community:
+        raise HTTPException(status_code=404, detail="Topluluk bulunamadı")
+
+    events = db.query(models.Event).filter(models.Event.community_id == community_id).all()
+    return events
+
 @app.post("/events/join", response_model=schemas.ParticipantOut)
 def join_event(
     data: schemas.EventJoin, 
@@ -236,3 +245,39 @@ async def get_announcements(community_id: int, db: Session = Depends(get_db)):
 
     announcements = db.query(models.Announcement).filter(models.Announcement.community_id == community_id).all()
     return announcements
+
+@app.delete("/announcements/{ann_id}")
+def delete_announcement(
+    ann_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(get_current_user)
+):
+    ann = db.query(models.Announcement).filter(models.Announcement.id == ann_id).first()
+    if not ann:
+        raise HTTPException(status_code=404, detail="Duyuru bulunamadı")
+    
+    community = db.query(models.Community).filter(models.Community.id == ann.community_id).first()
+    if community.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Bu duyuruyu silme yetkiniz yok")
+
+    db.delete(ann)
+    db.commit()
+    return {"message": "Duyuru silindi"}
+
+@app.delete("/events/{event_id}")
+def delete_event(
+    event_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(get_current_user)
+):
+    event = db.query(models.Event).filter(models.Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
+
+    community = db.query(models.Community).filter(models.Community.id == event.community_id).first()
+    if community.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Bu etkinliği silme yetkiniz yok")
+
+    db.delete(event)
+    db.commit()
+    return {"message": "Etkinlik silindi"}
