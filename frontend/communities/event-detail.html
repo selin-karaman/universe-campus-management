@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etkinlik Detayları | UniVerse</title>
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body style="background: #1e272e; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; line-height: 1.6;">
+
+    <div style="max-width: 1000px; margin: 0 auto;">
+        <a href="javascript:history.back()" style="color: #a29bfe; text-decoration: none; font-weight: bold;">← Topluluk Sayfasına Dön</a>
+
+        <header id="event-header" style="margin-top: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+            <h1 id="event-title" style="color: #fdcb6e; margin-bottom: 10px; font-size: 2.5em;">Yükleniyor...</h1>
+            <div id="event-meta" style="display: flex; gap: 20px; color: #dfe6e9; font-size: 1.1em;">
+                <span id="event-date">📅 --/--/----</span>
+                <span id="event-location">📍 Konum Yükleniyor...</span>
+            </div>
+        </header>
+
+        <main style="display: flex; gap: 40px; margin-top: 30px;">
+            <section style="flex: 2;">
+                <h3 style="color: #a29bfe; border-left: 4px solid #a29bfe; padding-left: 15px;">Etkinlik Hakkında</h3>
+                <p id="event-description" style="color: #dfe6e9; font-size: 1.1em; white-space: pre-wrap;"></p>
+            </section>
+
+            <aside style="flex: 1; min-width: 300px;">
+                <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                    <h3 style="margin-top: 0; color: #00b894;">Katılımcılar</h3>
+                    <div id="participants-list" style="margin-top: 15px; max-height: 400px; overflow-y: auto;">
+                    </div>
+                    
+                    <div id="event-action-area" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="event-detail.js"></script>
+</body>
+</html>

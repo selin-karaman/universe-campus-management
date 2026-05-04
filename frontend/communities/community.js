@@ -221,29 +221,56 @@ async function deleteAnnouncement(annId) {
 }
 
 async function fetchEvents() {
-    const eventList = document.getElementById('events-list'); 
+    const eventList = document.getElementById('events-list');
     if (!eventList) return;
 
     try {
         const response = await fetch(`${API_URL}/communities/${communityId}/events`);
-        
+        const token = localStorage.getItem('token');
+        let joinedEventIds = [];
+
+        if (token) {
+            const userRes = await fetch(`${API_URL}/users/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (userRes.ok) {
+                const userData = await userRes.json();
+                joinedEventIds = userData.event_participations ? userData.event_participations.map(p => p.event_id) : [];
+            }
+        }
+
         if (response.ok) {
             const events = await response.json();
             
             if (events.length > 0) {
-                eventList.innerHTML = events.map(e => `
-                    <div class="event-item" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed rgba(255,255,255,0.1);">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <h5 style="margin: 0; color: #a29bfe; font-size: 1em;">${e.title}</h5>
-                            <span style="font-size: 0.75em; color: #636e72;">📍 ${e.location || 'Kampüs'}</span>
-                            <button onclick="deleteEvent(${e.id})" style="background:none; border:none; color:#ff7675; cursor:pointer; font-size: 1em;">🗑️</button>
+                eventList.innerHTML = events.map(e => {
+                    const isJoined = joinedEventIds.includes(e.id);
+
+                    return `
+                        <div class="event-item" style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed rgba(255,255,255,0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <h5 onclick="window.location.href='event-detail.html?id=${e.id}'" 
+                                    style="margin: 0; color: #a29bfe; font-size: 1.1em; cursor: pointer; text-decoration: underline;">
+                                    ${e.title}
+                                </h5>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <span style="font-size: 0.75em; color: #636e72;">📍 ${e.location || 'Kampüs'}</span>
+                                    
+                                    ${isJoined ? 
+                                        `<button onclick="leaveEvent(${e.id})" style="padding: 5px 10px; background: #636e72; color:white; border:none; border-radius:5px; cursor:pointer; font-size: 0.8em; font-weight:bold;">Katıldın (Ayrıl)</button>` : 
+                                        `<button onclick="joinEvent(${e.id})" style="padding: 5px 10px; background: #00b894; color:white; border:none; border-radius:5px; cursor:pointer; font-size: 0.8em; font-weight:bold;">Etkinliğe Katıl</button>`
+                                    }
+
+                                    <button onclick="deleteEvent(${e.id})" style="background:none; border:none; color:#ff7675; cursor:pointer; font-size: 1em;">🗑️</button>
+                                </div>
+                            </div>
+                            <p style="font-size: 0.85em; margin: 8px 0; color: #dfe6e9;">${e.description}</p>
+                            <div style="font-size: 0.8em; color: #fdcb6e; font-weight: bold;">
+                                📅 ${new Date(e.date).toLocaleDateString('tr-TR')}
+                            </div>
                         </div>
-                        <p style="font-size: 0.85em; margin: 8px 0; color: #dfe6e9;">${e.description}</p>
-                        <div style="font-size: 0.8em; color: #fdcb6e; font-weight: bold;">
-                            📅 ${new Date(e.date).toLocaleDateString('tr-TR')}
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } else {
                 eventList.innerHTML = "<p style='color: #636e72; font-size: 0.85em; padding: 10px;'>Henüz planlanmış bir etkinlik yok.</p>";
             }
@@ -314,6 +341,55 @@ async function deleteEvent(eventId) {
         }
     } catch (error) {
         console.error("Silme hatası:", error);
+    }
+}
+
+async function joinEvent(eventId) {
+    const token = localStorage.getItem('token');
+    if (!token) return alert("Lütfen etkinliğe katılmak için giriş yapın.");
+
+    try {
+        const response = await fetch(`${API_URL}/events/join`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ event_id: eventId })
+        });
+
+        if (response.ok) {
+            alert("Etkinliğe başarıyla kayıt oldunuz! 🎉");
+            fetchEvents(); 
+        } else {
+            const err = await response.json();
+            alert(err.detail || "Bir hata oluştu.");
+        }
+
+    } catch (error) {
+        console.error("Katılım hatası:", error);
+    }
+}
+
+async function leaveEvent(eventId) {
+    if (!confirm("Bu etkinlikten ayrılmak istediğinize emin misiniz?")) return;
+
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`${API_URL}/events/leave/${eventId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            alert("Etkinlik kaydınız başarıyla silindi. 👋");
+            fetchEvents();
+        } else {
+            const err = await response.json();
+            alert(err.detail || "Bir hata oluştu.");
+        }
+    } catch (error) {
+        console.error("Ayrılma hatası:", error);
     }
 }
 

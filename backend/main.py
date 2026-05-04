@@ -197,6 +197,24 @@ def join_event(
     db.refresh(new_participant)
     return new_participant
 
+@app.delete("/events/leave/{event_id}")
+def leave_event(
+    event_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    participation = db.query(models.EventParticipant).filter(
+        models.EventParticipant.user_id == current_user.id,
+        models.EventParticipant.event_id == event_id
+    ).first()
+    
+    if not participation:
+        raise HTTPException(status_code=404, detail="Bu etkinliğe zaten kayıtlı değilsiniz.")
+
+    db.delete(participation)
+    db.commit()
+    return {"message": "Etkinlik kaydınız silindi"}
+
 @app.get("/communities/{community_id}/members")
 def get_community_members(community_id: int, db: Session = Depends(get_db)):
  
