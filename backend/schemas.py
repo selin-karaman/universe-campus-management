@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
-
 
 class MembershipBase(BaseModel):
     community_id: int
@@ -15,7 +14,12 @@ class MembershipOut(BaseModel):
     community_id: int
     role: str
     user_name: str | None = None 
+    class Config:
+        from_attributes = True
 
+class ParticipantUserOut(BaseModel):
+    id: int
+    name: str
     class Config:
         from_attributes = True
 
@@ -24,7 +28,7 @@ class ParticipantOut(BaseModel):
     user_id: int
     event_id: int
     joined_at: datetime
-
+    user: Optional[ParticipantUserOut] = None
     class Config:
         from_attributes = True
 
@@ -39,9 +43,8 @@ class UserOut(BaseModel):
     name: str
     email: EmailStr
     role: str
-    memberships: list[MembershipOut] = []
-    event_participations: list[ParticipantOut] = []
-
+    memberships: List[MembershipOut] = []
+    event_participations: List[ParticipantOut] = []
     class Config:
         from_attributes = True
 
@@ -59,7 +62,6 @@ class CommunityCreate(CommunityBase):
 class CommunityOut(CommunityBase): 
     id: int
     owner_id: int
-
     class Config:
         from_attributes = True
 
@@ -75,13 +77,12 @@ class EventCreate(EventBase):
 class EventOut(EventBase):
     id: int
     community_id: int
-
+    participants: List[ParticipantOut] = []
     class Config:
         from_attributes = True
 
 class EventJoin(BaseModel):
     event_id: int
-
 
 class AnnouncementBase(BaseModel):
     title: str
@@ -94,6 +95,5 @@ class AnnouncementCreate(AnnouncementBase):
 class AnnouncementOut(AnnouncementBase):
     id: int
     created_at: datetime
-
     class Config:
         from_attributes = True

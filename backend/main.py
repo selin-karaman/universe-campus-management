@@ -215,6 +215,13 @@ def leave_event(
     db.commit()
     return {"message": "Etkinlik kaydınız silindi"}
 
+@app.get("/events/{event_id}", response_model=schemas.EventOut)
+def get_event(event_id: int, db: Session = Depends(get_db)):
+    event = db.query(models.Event).filter(models.Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
+    return event
+
 @app.get("/communities/{community_id}/members")
 def get_community_members(community_id: int, db: Session = Depends(get_db)):
  
@@ -299,3 +306,39 @@ def delete_event(
     db.delete(event)
     db.commit()
     return {"message": "Etkinlik silindi"}
+
+@app.get("/feed")
+def get_global_feed(db: Session = Depends(get_db)):
+    announcements = db.query(models.Announcement).all()
+    events = db.query(models.Event).all()
+    
+    feed = []
+
+    for ann in announcements:
+        community = db.query(models.Community).filter(models.Community.id == ann.community_id).first()
+        feed.append({
+            "type": "announcement",
+            "id": ann.id,
+            "title": ann.title,
+            "content": ann.content,
+            "created_at": ann.created_at,
+            "community_name": community.name if community else "Bilinmeyen Topluluk",
+            "community_id": ann.community_id
+        })
+
+    for ev in events:
+        community = db.query(models.Community).filter(models.Community.id == ev.community_id).first()
+        feed.append({
+            "type": "event",
+            "id": ev.id,
+            "title": ev.title,
+            "content": ev.description,
+            "created_at": ev.date,      
+            "location": ev.location,
+            "community_name": community.name if community else "Bilinmeyen Topluluk",
+            "community_id": ev.community_id
+        })
+
+    feed.sort(key=lambda x: x["created_at"], reverse=True)
+    
+    return feed

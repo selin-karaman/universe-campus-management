@@ -3,7 +3,11 @@ const urlParams = new URLSearchParams(window.location.search);
 const eventId = urlParams.get('id');
 
 async function loadEventDetails() {
-    if (!eventId) return;
+    if (!eventId) {
+        console.error("URL'de event ID bulunamadı!");
+        document.getElementById('event-title').innerText = "Hata: Etkinlik ID bulunamadı";
+        return;
+    }
 
     try {
         const response = await fetch(`${API_URL}/events/${eventId}`);
@@ -15,10 +19,40 @@ async function loadEventDetails() {
             document.getElementById('event-location').innerText = `📍 ${event.location || 'Kampüs'}`;
             document.getElementById('event-description').innerText = event.description;
             
+            updateParticipantsList(event.participants);
             renderActionButtons();
+        } else {
+            document.getElementById('event-title').innerText = "Etkinlik bulunamadı";
         }
     } catch (error) {
-        console.error("Etkinlik yüklenirken hata:", error);
+        console.error("Bağlantı hatası:", error);
+        document.getElementById('event-title').innerText = "Sunucuya bağlanılamadı";
+    }
+}
+
+function updateParticipantsList(participants) {
+    const listDiv = document.getElementById('participants-list');
+    if (!listDiv) return;
+
+    if (participants && participants.length > 0) {
+        const colors = ['#6c5ce7', '#00b894', '#e84393', '#0984e3', '#fdcb6e', '#e17055'];
+
+        listDiv.innerHTML = participants.map((p, index) => {
+            const name = p.user?.name || "Gizli Üye";
+            const initial = name.charAt(0).toUpperCase();
+            const bgColor = colors[index % colors.length];
+
+            return `
+                <div style="display: flex; align-items: center; margin-bottom: 15px; padding: 5px;">
+                    <div style="width: 35px; height: 35px; background: ${bgColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; font-weight: bold; color: white; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                        ${initial}
+                    </div>
+                    <span style="font-size: 1em; color: #dfe6e9; font-weight: 500;">${name}</span>
+                </div>
+            `;
+        }).join('');
+    } else {
+        listDiv.innerHTML = `<p style="color: #636e72; font-size: 0.9em; text-align: center; margin-top: 20px;">Henüz katılımcı yok. <br> İlk katılan sen ol! 🚀</p>`;
     }
 }
 
