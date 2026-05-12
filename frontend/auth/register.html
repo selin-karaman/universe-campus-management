@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giriş Yap | UniVerse</title>
-    <link rel="stylesheet" href="../assets/style.css?v=1.4">
+    <title>Hesap Oluştur | UniVerse</title>
+    <link rel="stylesheet" href="../assets/style.css?v=1.5">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
@@ -17,7 +17,7 @@
         }
         .login-container {
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             padding: 40px;
             background: var(--card);
             border: 1px solid var(--border);
@@ -97,32 +97,38 @@
     </style>
 </head>
 <body>
-<div class="login-container">
-    <h1>Giriş Yap</h1>
-    <p>UniVerse dünyasına tekrar hoş geldin.</p>
-    
-    <div id="error-message" style="display: none; background: rgba(225, 112, 85, 0.1); color: #e17055; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(225, 112, 85, 0.2);">
-        Hatalı e-posta veya şifre!
-    </div>
+    <div class="login-container">
+        <h1>Hesap Oluştur</h1>
+        <p>Kampüsün dijital dünyasına ilk adımı at.</p>
+        
+        <form id="register-form">
+            <div class="form-group" style="display: flex; gap: 15px;">
+                <div style="flex: 1;">
+                    <label for="name">İsim</label>
+                    <input type="text" id="name" placeholder="Selin" required>
+                </div>
+                <div style="flex: 1;">
+                    <label for="surname">Soyisim</label>
+                    <input type="text" id="surname" placeholder="Karaman" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="email">E-posta</label>
+                <input type="email" id="email" placeholder="isim@ogr.beun.edu.tr" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" placeholder="••••••••" maxlength="72" required>
+            </div>
+            <button type="submit" class="btn-submit">Kaydı Tamamla</button>
+        </form>
 
-    <form id="login-form">
-        <div class="form-group">
-            <label for="email">E-posta</label>
-            <input type="email" id="email" placeholder="isim@ornek.com" required>
+        <div style="margin-top: 25px; font-size: 0.9rem; color: var(--text-secondary);">
+            Zaten hesabın var mı? <a href="login.html" style="color: var(--primary); text-decoration: none; font-weight: 700;">Giriş Yap</a>
         </div>
-        <div class="form-group">
-            <label for="password">Şifre</label>
-            <input type="password" id="password" placeholder="••••••••" required>
-        </div>
-        <button type="submit" class="btn-submit">Sisteme Giriş Yap</button>
-    </form>
 
-    <div style="margin-top: 25px; font-size: 0.9rem; color: var(--text-secondary);">
-        Hesabın yok mu? <a href="register.html" style="color: var(--primary); text-decoration: none; font-weight: 700;">Hemen Oluştur</a>
+        <a href="../index.html" class="back-link">← Ana Sayfaya Dön</a>
     </div>
-
-    <a href="../index.html" class="back-link">← Ana Sayfaya Dön</a>
-</div>
 
     <script src="auth.js"></script>
 </body>

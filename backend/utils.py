@@ -2,6 +2,9 @@ import bcrypt
 from datetime import datetime, timedelta
 from jose import jwt
 import os
+from passlib.context import CryptContext
+
+import hashlib
 
 def hash_password(password: str):
     pwd_bytes = password.encode('utf-8')
@@ -24,3 +27,13 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password: str):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(plain_password, hashed_password):
+    return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password

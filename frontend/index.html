@@ -4,98 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Universe | Kampüsün Merkezi</title>
-    <link rel="stylesheet" href="../assets/style.css">
-    <style>
-    body {
-        background-color: #1a1a2e; 
-        color: #ffffff;
-        margin: 0;
-        font-family: 'Inter', sans-serif;
-    }
-    .dashboard-layout {
-        display: flex;
-        gap: 30px;
-        max-width: 1200px;
-        margin: 40px auto;
-        padding: 0 20px;
-    }
-    .feed-section { flex: 2; }
-    .sidebar-section {
-        flex: 1;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 20px;
-        padding: 25px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        height: fit-content;
-    }
-    .feed-card {
-        background: #16213e; 
-        border-radius: 16px;
-        padding: 25px;
-        margin-bottom: 25px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    .feed-card:hover {
-        transform: translateY(-5px);
-        background: #1b264f;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    }
-    .tag {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75em;
-        font-weight: bold;
-        text-transform: uppercase;
-        margin-bottom: 10px;
-    }
-    .tag-event { background: #00b894; color: white; }
-    .tag-ann { background: #6c5ce7; color: white; }
-    
-    .mini-community-card {
-        padding: 12px;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        transition: background 0.2s;
-    }
-    .mini-community-card:hover { background: rgba(255,255,255,0.05); }
-
-    .feed-card {
-    background: #16213e;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .feed-card h2 {
-    font-size: 1.25rem;
-    margin: 10px 0;
-    color: #fff;
-    }
-
-    .feed-card p {
-    font-size: 0.9rem;
-    color: #b2bec3;
-    line-height: 1.5;
-    }
-</style>
+    <link rel="stylesheet" href="assets/style.css?v=1.2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
-<body style="background-color: #1e272e; color: white;">
+<body>
     <header>
-        <nav style="display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background: rgba(0,0,0,0.2);">
-            <div class="logo" style="font-size: 1.8em; font-weight: bold; color: #a29bfe;">Universe</div>
+        <nav>
+            <div class="logo">Universe</div>
             <div id="nav-auth" class="auth-buttons">
-                <a href="auth/login.html" style="color: white; text-decoration: none; background: #6c5ce7; padding: 8px 20px; border-radius: 5px;">Giriş Yap</a>
+                <a href="auth/login.html" class="btn-login">Giriş Yap</a>
             </div>
         </nav>
     </header>
 
     <main>
-        <section class="hero" style="text-align: center; padding: 40px 20px; background: linear-gradient(180deg, rgba(108, 92, 231, 0.1) 0%, transparent 100%);">
+        <section class="hero">
             <h1>Kampüste Bugün</h1>
-            <p style="color: #dfe6e9;">Universe ile tüm toplulukların nabzını tek bir yerden tut.</p>
+            <p>Universe ile tüm toplulukların nabzını tek bir yerden tut.</p>
         </section>
 
         <div class="dashboard-layout">
@@ -107,7 +32,7 @@
             </section>
 
             <aside class="sidebar-section">
-                <h2 class="section-title" style="font-size: 1.2em; color: #a29bfe;">🏷️ Topluluklar</h2>
+                <h2 class="section-title">🏷️ Topluluklar</h2>
                 <div id="community-container">
                     <p class="loading">Yükleniyor...</p>
                 </div>

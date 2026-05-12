@@ -9,14 +9,16 @@ async function fetchCommunities() {
         if (response.ok) {
             const communities = await response.json();
             container.innerHTML = communities.map(c => `
-                <div class="mini-community-card" style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="window.location.href='community.html?id=${c.id}'">
+                <div class="mini-community-card" 
+                     style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" 
+                     onclick="window.location.href='/frontend/communities/community.html?id=${c.id}'"
                     <h4 style="margin: 0; color: #a29bfe; font-size: 0.95em;">${c.name}</h4>
-                    <p style="margin: 5px 0 0 0; font-size: 0.8em; color: #636e72;">${(c.description || '').substring(0, 40)}...</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #94a3b8;">${(c.description || '').substring(0, 45)}...</p>
                 </div>
             `).join('');
         }
     } catch (error) {
-        console.error("Topluluk hatası:", error);
+        console.error("Topluluk listesi yüklenemedi:", error);
     }
 }
 
@@ -36,8 +38,8 @@ async function loadFeed() {
 
             feedDiv.innerHTML = feedItems.map(item => {
                 const targetUrl = item.type === 'event' 
-                    ? `communities/event-detail.html?id=${item.id}` 
-                    : `communities/community.html?id=${item.community_id}`;
+                    ? `/frontend/communities/event-detail.html?id=${item.id}` 
+                    : `/frontend/communities/community.html?id=${item.community_id}`;
                 
                 const typeLabel = item.type === 'event' ? 'ETKİNLİK' : 'DUYURU';
                 const tagClass = item.type === 'event' ? 'tag-event' : 'tag-ann';
@@ -68,6 +70,7 @@ async function loadFeed() {
 window.onload = () => {
     fetchCommunities();
     loadFeed();
+    checkLoginState(); 
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -102,11 +105,6 @@ async function checkAuth() {
     }
 }
 
-function logout() {
-    localStorage.removeItem('token');
-    window.location.reload(); 
-}
-
 async function joinCommunity(communityId) {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -136,6 +134,25 @@ async function joinCommunity(communityId) {
     } catch (error) {
         console.error("Katılma hatası:", error);
     }
+}
+
+function checkLoginState() {
+    const navAuth = document.getElementById('nav-auth');
+    const token = localStorage.getItem('token');
+    const userName = localStorage.getItem('user_name'); 
+
+    if (token && navAuth) {
+        navAuth.innerHTML = `
+            <span style="margin-right: 15px; color: #dfe6e9;">Hoş geldin, <b>${userName || 'Kullanıcı'}</b></span>
+            <button onclick="logout()" style="background: #e17055; color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer;">Çıkış Yap</button>
+        `;
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user_name');
+    window.location.reload(); 
 }
 
 loadFeed();

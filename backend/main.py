@@ -6,6 +6,8 @@ import models, schemas, database, utils
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
+import utils as auth_service
+from jose import JWTError, jwt 
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -62,9 +64,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token = utils.create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
-
-
-from jose import JWTError, jwt 
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     credentials_exception = HTTPException(
@@ -308,37 +307,63 @@ def delete_event(
     return {"message": "Etkinlik silindi"}
 
 @app.get("/feed")
-def get_global_feed(db: Session = Depends(get_db)):
-    announcements = db.query(models.Announcement).all()
-    events = db.query(models.Event).all()
+def get_global_feed(db: Session = Depends(database.get_db)):
+    try:
+        events = db.query(models.Event).all()
+        announcements = db.query(models.Announcement).all()
+        
+        feed = []
+        for e in events:
+            feed.append({
+                "id": e.id,
+                "type": "event",
+                "title": e.title,
+                "content": e.description,
+                "community_name": e.community.name,
+                "community_id": e.community_id,
+                "created_at": e.date.isoformat()
+            })
+        for a in announcements:
+            feed.append({
+                "id": a.id,
+                "type": "announcement",
+                "title": a.title,
+                "content": a.content,
+                "community_name": a.community.name,
+                "community_id": a.community_id,
+                "created_at": a.created_at.isoformat()
+            })
+        
+        feed.sort(key=lambda x: x['created_at'], reverse=True)
+        return feed
+    except Exception as error:
+        print(f"Feed Error: {error}")
+        raise HTTPException(status_code=500, detail="Feed yuklenirken hata olustu")
+
+@app.post("/auth/register")
+def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Bu e-posta zaten kayıtlı.")
     
-    feed = []
+    if not user.password:
+         raise HTTPException(status_code=422, detail="Şifre boş olamaz.")
 
-    for ann in announcements:
-        community = db.query(models.Community).filter(models.Community.id == ann.community_id).first()
-        feed.append({
-            "type": "announcement",
-            "id": ann.id,
-            "title": ann.title,
-            "content": ann.content,
-            "created_at": ann.created_at,
-            "community_name": community.name if community else "Bilinmeyen Topluluk",
-            "community_id": ann.community_id
-        })
-
-    for ev in events:
-        community = db.query(models.Community).filter(models.Community.id == ev.community_id).first()
-        feed.append({
-            "type": "event",
-            "id": ev.id,
-            "title": ev.title,
-            "content": ev.description,
-            "created_at": ev.date,      
-            "location": ev.location,
-            "community_name": community.name if community else "Bilinmeyen Topluluk",
-            "community_id": ev.community_id
-        })
+    hashed_pw = auth_service.get_password_hash(user.password)
+    
+    new_user = models.User(
+        email=user.email,
+        password=hashed_pw,
+        name=user.name  
+    )   
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {"status": "success", "message": "Kullanıcı oluşturuldu"}
 
     feed.sort(key=lambda x: x["created_at"], reverse=True)
-    
     return feed
+
+
+
