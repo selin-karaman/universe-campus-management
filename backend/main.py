@@ -362,6 +362,26 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_d
     db.refresh(new_user)
     return {"status": "success", "message": "Kullanıcı oluşturuldu"}
 
+@app.get("/users/me")
+def get_current_user_profile(
+    db: Session = Depends(database.get_db), 
+    current_user: models.User = Depends(auth_service.get_current_user)
+):
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "communities": [
+            {
+                "id": c.id, 
+                "name": c.name, 
+                "description": c.description,
+                "member_count": len(c.members)
+            } for c in current_user.communities
+        ],
+        "community_count": len(current_user.communities)
+    }
+
     feed.sort(key=lambda x: x["created_at"], reverse=True)
     return feed
 

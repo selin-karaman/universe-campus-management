@@ -143,8 +143,18 @@ function checkLoginState() {
 
     if (token && navAuth) {
         navAuth.innerHTML = `
-            <span style="margin-right: 15px; color: #dfe6e9;">Hoş geldin, <b>${userName || 'Kullanıcı'}</b></span>
-            <button onclick="logout()" style="background: #e17055; color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer;">Çıkış Yap</button>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="nav-profile-circle" onclick="window.location.href='profile.html'" 
+                     style="width: 40px; height: 40px; background: #6c5ce7; border-radius: 50%; 
+                            display: flex; align-items: center; justify-content: center; 
+                            cursor: pointer; font-weight: bold; color: white; border: 2px solid rgba(255,255,255,0.1);">
+                    ${userName ? userName[0].toUpperCase() : 'U'}
+                </div>
+                <button onclick="logout()" style="background: rgba(225, 112, 85, 0.2); color: #e17055; 
+                        border: 1px solid #e17055; padding: 6px 15px; border-radius: 8px; cursor: pointer;">
+                    Çıkış
+                </button>
+            </div>
         `;
     }
 }
@@ -153,6 +163,68 @@ function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user_name');
     window.location.reload(); 
+}
+
+async function loadUserProfile() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'auth/login.html';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/users/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const user = await response.json();
+            document.getElementById('user-full-name').innerText = user.name;
+            document.getElementById('user-email').innerText = user.email;
+            document.getElementById('user-initial').innerText = user.name[0].toUpperCase();
+            document.getElementById('community-count').innerText = user.community_count;
+            
+            const commContainer = document.getElementById('my-communities');
+            if (user.communities.length > 0) {
+                commContainer.innerHTML = user.communities.map(c => `
+                    <div class="community-card" onclick="location.href='communities/community.html?id=${c.id}'">
+                        <h3>${c.name}</h3>
+                    </div>
+                `).join('');
+            } else {
+                commContainer.innerHTML = "<p>Henüz hiçbir topluluğa katılmadın.</p>";
+            }
+        }
+    } catch (error) {
+        console.error("Profil yüklenemedi:", error);
+    }
+}
+
+async function joinCommunity() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const communityId = parseInt(urlParams.get('id'));
+    const token = localStorage.getItem('token');
+
+    try {
+        const response = await fetch(`${API_URL}/communities/join`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ community_id: communityId })
+        });
+
+        if (response.ok) {
+            alert("Topluluğa başarıyla katıldın! 🎉");
+            window.location.reload(); 
+        } else {
+            const error = await response.json();
+            alert(error.detail || "Katılım sırasında bir hata oluştu.");
+        }
+    } catch (error) {
+        console.error("Join error:", error);
+    }
 }
 
 loadFeed();

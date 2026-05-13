@@ -4,80 +4,96 @@ const communityId = urlParams.get('id');
 
 
 async function loadCommunityDetails() {
-    if (!communityId) {
-        alert("Topluluk ID bulunamadı!");
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentCommId = urlParams.get('id');
+
+    if (!currentCommId) {
+        console.error("Topluluk ID bulunamadı!");
         return;
     }
 
     try {
-        const response = await fetch(`${API_URL}/communities/${communityId}`);
+        const response = await fetch(`${API_URL}/communities/${currentCommId}`);
+        if (!response.ok) throw new Error("Topluluk verisi alınamadı");
+        
         const community = await response.json();
 
-        if (response.ok) {
-            if (document.getElementById('comm-name')) document.getElementById('comm-name').innerText = community.name;
-            if (document.getElementById('comm-desc')) document.getElementById('comm-desc').innerText = community.description;
+        if (document.getElementById('comm-name')) document.getElementById('comm-name').innerText = community.name;
+        if (document.getElementById('comm-desc')) document.getElementById('comm-desc').innerText = community.description;
          
-            fetchAnnouncements();
-            loadMembers(); 
-            fetchEvents();
+        fetchAnnouncements();
+        loadMembers(); 
+        fetchEvents();
 
-            const token = localStorage.getItem('token');
-            if (token) {
-                const userRes = await fetch(`${API_URL}/users/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+        const token = localStorage.getItem('token');
+        const headerElem = document.getElementById('community-header');
+        
+        if (!headerElem) {
+            console.error("HATA: 'community-header' ID'li element HTML'de bulunamadı!");
+            return;
+        }
+
+        if (token) {
+            const userRes = await fetch(`${API_URL}/users/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (userRes.ok) {
+                const userData = await userRes.json();
                 
-                if (userRes.ok) {
-                    const userData = await userRes.json();
+                const isMember = userData.communities && userData.communities.some(c => String(c.id) === String(currentCommId));
+                
+                if (isMember) {
+                    headerElem.innerHTML += `
+                        <div id="membership-badge" style="margin-top:15px;">
+                            <span style="background: #2ecc71; color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.85em; font-weight: bold; display: inline-block; border: 1px solid rgba(255,255,255,0.1);">
+                                ✓ Bu topluluğun üyesisiniz
+                            </span>
+                        </div>`;
+                } else {
+                    headerElem.innerHTML += `
+                        <button id="join-btn" onclick="joinCommunity()" 
+                                style="display: block; margin-top: 20px; padding: 12px 28px; background: #6c5ce7; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);">
+                            Topluluğa Katıl
+                        </button>`;
+                }
 
-                    const headerElem = document.getElementById('community-header');
-                    
-                    if (headerElem) {
-                        const isMember = userData.memberships.some(m => String(m.community_id) === String(communityId));
-                        if (isMember) {
-                            headerElem.innerHTML += `
-                                <div id="membership-badge" style="margin-top:10px;">
-                                    <span style="background: #2ecc71; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; display: inline-block;">
-                                        ✓ Bu topluluğun üyesisiniz
-                                    </span>
-                                </div>`;
-                        }
-
-                        const isOwner = String(userData.id) === String(community.owner_id);
-                        if (isOwner) {
-                            headerElem.innerHTML += `
-                                <div id="admin-panel" style="margin-top:20px; padding:15px; border: 2px dashed #a29bfe; border-radius: 12px; background: rgba(162, 155, 254, 0.1);">
-                                    <h3 style="color: #a29bfe; margin-top:0; font-size: 1em;">🛠️ Yönetici Paneli</h3>
-                                    <p style="font-size: 0.8em; opacity: 0.8; color: white;">Bu topluluğun kurucusu olduğunuz için duyuru yayınlayabilirsiniz.</p>
-                                    <button onclick="toggleAnnouncementForm()" style="padding: 8px 15px; background: #6c5ce7; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
-                                        + Yeni Duyuru Paylaş
-                                    </button>
-                                     <button onclick="toggleEventForm()" style="padding: 8px 15px; background: #a29bfe; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; margin-left: 10px;">
-                                        + Yeni Etkinlik Oluştur
-                                    </button>
-                                    <div id="announcement-form" style="display:none; margin-top:15px;">
-                                        <textarea id="ann-content" placeholder="Duyuru içeriğini buraya yazın..." style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd; background:#2d3436; color:white;"></textarea>
-                                        <button onclick="postAnnouncement()" style="margin-top:10px; padding:8px 15px; background: #00b894; color:white; border:none; border-radius:5px; cursor:pointer;">Yayınla</button>
-                                    </div>
-                                    <div id="event-form" style="display:none; margin-top:15px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                                        <input type="text" id="event-title" placeholder="Etkinlik Başlığı" style="width:100%; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #444; background:#2d3436; color:white;">
-                                        <textarea id="event-desc" placeholder="Etkinlik Açıklaması" style="width:100%; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #444; background:#2d3436; color:white;"></textarea>
-                                        <div style="display: flex; gap: 10px;">
-                                            <input type="date" id="event-date" style="flex: 1; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #444; background:#2d3436; color:white;">
-                                            <input type="text" id="event-location" placeholder="Konum (örn: Teknopark)" style="flex: 1; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #444; background:#2d3436; color:white;">
-                                        </div>
-                                        <button onclick="postEvent()" style="width:100%; padding:10px; background: #00b894; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Etkinliği Oluştur</button>
-                                    </div>
-                                </div>`;
-                        }
-                    }
+                const isOwner = String(userData.id) === String(community.owner_id);
+                if (isOwner) {
+                    headerElem.innerHTML += `
+                        <div id="admin-panel" style="margin-top:25px; padding:20px; border: 2px dashed #a29bfe; border-radius: 15px; background: rgba(162, 155, 254, 0.05);">
+                            <h3 style="color: #a29bfe; margin-top:0; font-size: 1.1em;">🛠️ Yönetici Paneli</h3>
+                            <p style="font-size: 0.9em; opacity: 0.8; color: white; margin-bottom: 15px;">Bu topluluğun kurucusu olduğunuz için yetkilisiniz.</p>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button onclick="toggleAnnouncementForm()" style="padding: 10px 18px; background: #6c5ce7; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">+ Yeni Duyuru</button>
+                                <button onclick="toggleEventForm()" style="padding: 10px 18px; background: #a29bfe; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">+ Yeni Etkinlik</button>
+                            </div>
+                            <!-- Formlar -->
+                            <div id="announcement-form" style="display:none; margin-top:15px;">
+                                <textarea id="ann-content" placeholder="Duyuru içeriği..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #444; background:#1e272e; color:white;"></textarea>
+                                <button onclick="postAnnouncement()" style="margin-top:10px; padding:10px 20px; background: #00b894; color:white; border:none; border-radius:8px; cursor:pointer;">Yayınla</button>
+                            </div>
+                            <div id="event-form" style="display:none; margin-top:15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+                                <input type="text" id="event-title" placeholder="Etkinlik Başlığı" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #444; background:#1e272e; color:white;">
+                                <textarea id="event-desc" placeholder="Etkinlik Açıklaması" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #444; background:#1e272e; color:white;"></textarea>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="date" id="event-date" style="flex: 1; padding:10px; border-radius:8px; border:1px solid #444; background:#1e272e; color:white;">
+                                    <input type="text" id="event-location" placeholder="Konum" style="flex: 1; padding:10px; border-radius:8px; border:1px solid #444; background:#1e272e; color:white;">
+                                </div>
+                                <button onclick="postEvent()" style="width:100%; padding:12px; margin-top:10px; background: #00b894; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Etkinliği Oluştur</button>
+                            </div>
+                        </div>`;
                 }
             }
         } else {
-            console.error("Topluluk verisi alınamadı");
+            headerElem.innerHTML += `
+                <button onclick="window.location.href='../auth/login.html'" 
+                        style="margin-top: 20px; padding: 12px 28px; background: #6c5ce7; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">
+                    Katılmak için Giriş Yap
+                </button>`;
         }
     } catch (error) {
-        console.error("Yükleme hatası:", error);
+        console.error("Yükleme sırasında hata oluştu:", error);
     }
 }
 
@@ -392,5 +408,40 @@ async function leaveEvent(eventId) {
         console.error("Ayrılma hatası:", error);
     }
 }
+window.joinCommunity = async function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const cId = urlParams.get('id');
+    const token = localStorage.getItem('token');
+
+    console.log("Katılma isteği gönderiliyor... Topluluk ID:", cId); 
+
+    if (!token) {
+        alert("Lütfen önce giriş yapın.");
+        window.location.href = '../auth/login.html';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/communities/join`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ community_id: parseInt(cId) })
+        });
+
+        if (response.ok) {
+            alert("Topluluğa başarıyla katıldın! 🎉");
+            window.location.reload(); 
+        } else {
+            const error = await response.json();
+            alert(error.detail || "Bir hata oluştu.");
+        }
+    } catch (error) {
+        console.error("Join error:", error);
+        alert("Bağlantı hatası oluştu.");
+    }
+};
 
 loadCommunityDetails();

@@ -2,12 +2,22 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Universe | Topluluk Detayı</title>
     <link rel="stylesheet" href="../assets/style.css">
+    <style>
+        /* Detay sayfası için ufak stil dokunuşları */
+        .detail-container { padding: 40px 20px; max-width: 1200px; margin: 0 auto; }
+        #community-header { margin-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; }
+        #comm-name { font-size: 2.5rem; margin-bottom: 10px; color: #fff; }
+        #comm-desc { font-size: 1.1rem; color: #94a3b8; line-height: 1.6; }
+        .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        @media (max-width: 768px) { .content-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
     <header>
-        <nav>
+        <nav class="navbar">
             <div class="logo"><a href="../index.html" style="text-decoration:none; color:inherit;">Universe</a></div>
             <div id="user-info"></div>
         </nav>
@@ -15,29 +25,32 @@
 
     <main class="detail-container">
         <div style="margin-bottom: 20px;">
-           <a href="../index.html" style="text-decoration: none; color: #a29bfe; font-weight: bold;">← Ana Sayfaya Dön</a>
+           <a href="../index.html" style="text-decoration: none; color: #a29bfe; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+              <span>←</span> Ana Sayfaya Dön
+           </a>
         </div>
-
         <section id="community-header">
             <h1 id="comm-name">Yükleniyor...</h1>
             <p id="comm-desc"></p>
         </section>
 
-        <div class="content-grid" style="display: flex; gap: 30px; margin-top: 30px;">
-            <section class="announcements-section" style="flex: 2;">
-                <h2>📢 Duyurular</h2>
-                <div id="announcements-list">Henüz duyuru yok.</div>
-                
-                <section class="events-section" style="margin-top: 20px;">
-                    <h2>📅 Etkinlikler</h2>
-                    <div id="events-list">Henüz etkinlik yok.</div>
+        <div class="content-grid">
+            <div class="main-content">
+                <section class="announcements-section">
+                    <h2 style="margin-bottom: 20px;">📢 Duyurular</h2>
+                    <div id="announcements-list">Yükleniyor...</div>
                 </section>
-            </section>
+                
+                <section class="events-section" style="margin-top: 40px;">
+                    <h2 style="margin-bottom: 20px;">📅 Etkinlikler</h2>
+                    <div id="events-list">Yükleniyor...</div>
+                </section>
+            </div>
 
-            <section class="members-section" style="flex: 1; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
-                <h2>👥 Üyeler</h2>
+            <aside class="members-section" style="background: rgba(255,255,255,0.03); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); height: fit-content;">
+                <h2 style="margin-bottom: 20px; font-size: 1.2rem;">👥 Üyeler</h2>
                 <div id="members-list">Üyeler yükleniyor...</div>
-            </section>
+            </aside>
         </div>
     </main>
 

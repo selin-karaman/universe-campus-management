@@ -1,39 +1,52 @@
-import bcrypt
-from datetime import datetime, timedelta
-from jose import jwt
 import os
-from passlib.context import CryptContext
-
 import hashlib
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
-def hash_password(password: str):
-    pwd_bytes = password.encode('utf-8')
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(pwd_bytes, salt)
-    return hashed_password.decode('utf-8')
+import database
+import models
 
-def verify_password(plain_password, hashed_password):
-    password_byte = plain_password.encode('utf-8')
-    hashed_byte = hashed_password.encode('utf-8')
-    return bcrypt.checkpw(password_byte, hashed_byte)
+SECRET_KEY = os.getenv("SECRET_KEY", "varsayilan_gizli_anahtar_degistir")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+def get_password_hash(password: str):
+    """Şifreyi SHA256 ile hash'ler (Bcrypt çakışmalarını önlemek için)"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(plain_password: str, hashed_password: str):
+    """Gelen şifre ile veritabanındaki hash'i karşılaştırır"""
+    return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
 
 def create_access_token(data: dict):
+    """JWT Token oluşturur"""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password: str):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def verify_password(plain_password, hashed_password):
-    return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
+def get_current_user(db: Session = Depends(database.get_db), token: str = Depends(oauth2_scheme)):
+    """Token'ı doğrular ve kullanıcıyı veritabanından getirir"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Geçersiz kimlik bilgileri",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+        
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user is None:
+        raise credentials_exception
+    return user
